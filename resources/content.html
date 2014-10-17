@@ -1,0 +1,30 @@
+<!doctype html>
+
+<html>
+  <head>
+    <title>Sample Content</title>
+    
+    <link rel="stylesheet" type="text/css" href="css/reset.css" />
+    
+    <script src="scripts/jquery.js" type="text/javascript"></script>
+    <script type="text/javascript">
+      $(document).ready(function() {
+        var letters = '0123456789ABCDEF'.split('');
+        var color = '#';
+        for (var i = 0; i < 6; i++ ) {
+            color += letters[Math.floor(Math.random() * 16)];
+        }
+      
+        var resizer = function() {
+          $("body").text("I AM AN IFRAME: " + $(window).width() + "/" + $(window).height());
+          $("body").css("background", color);
+        };
+        $(window).resize(resizer);
+        
+        resizer();
+      });
+    </script>
+  </head>
+  <body>
+  </body>
+</html>

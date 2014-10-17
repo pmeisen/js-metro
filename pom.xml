@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project>
+  <modelVersion>4.0.0</modelVersion>
+  
+  <!-- project settings -->
+  <groupId>net.meisen.ui</groupId>
+  <artifactId>net-meisen-ui-js-metro</artifactId>
+  <version>TRUNK</version>
+  <name>metro</name>
+  <description>Metro like User-Interface</description>
+  
+  <!-- the projects dependencies -->
+  <dependencies>
+    <dependency>
+      <groupId>org.jquery</groupId>
+      <artifactId>jquery</artifactId>
+      <version>1.9.1</version>
+    </dependency>
+    
+    <dependency>
+      <groupId>org.requirejs</groupId>
+      <artifactId>require</artifactId>
+      <version>2.1.8</version>
+    </dependency>
+  </dependencies>
+</project>
