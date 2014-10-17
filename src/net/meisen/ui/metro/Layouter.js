@@ -268,6 +268,33 @@ define(['jquery'], function($) {
           if (tileConfig.showPreview == false || !_ref.isCssPointerEvents()) {
             iframe.hide();
           }
+        } else if (tileConfig.script != null) {
+          var el = $(this);
+          
+          var div = $("<div></div>").appendTo(el);
+          div.addClass("content");
+          div.css({
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: el.width() + "px",
+            height: el.height() + "px",
+            cursor: "default",
+            backgroundColor: '#FFFFFF',
+            pointerEvents: "none"
+          });
+          div.click(function(e) {
+            e.stopPropagation();
+          });
+          
+          var func;
+          if ($.isFunction(tileConfig.script)) {
+            func = tileConfig.script;
+          } else {
+            func = function() { eval(tileConfig.script); };
+          }
+          div.on('full', function() { func(div); });
+          div.hide();
         }
       });
     },
@@ -292,9 +319,11 @@ define(['jquery'], function($) {
          *  - this.applyLayout(panelLayout, el);
          */
         this.applyLayout(panelLayout);
+        this.getContent(el).trigger('tile');
       } else {
         var singleLayout = this.determineSingleLayout();
         this.applyLayout(singleLayout, el);
+        this.getContent(el).trigger('full');
       }
     },
     
