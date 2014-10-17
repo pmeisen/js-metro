@@ -48,7 +48,6 @@ define(['jquery'], function($) {
   };
   
   var Layouter = function() {
-    this.layout = null;
     this.panel = null;
     this.width = 0;
     this.height = 0;
