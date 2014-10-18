@@ -58,10 +58,13 @@ define(['jquery'], function($) {
     this.tiles = [];
     this.layouts = {};
     
+    this.boundToViewport = false;
+    
     this.panelRule = function() { return null; };
     this.singleRule = function() { return null; };
   };
   Layouter.prototype = {
+    placeHolderSelector: 'div.placeholder[id^="placeholder_"',
     
     isCssPointerEvents: function() {
       var element = document.createElement('x');
@@ -166,50 +169,16 @@ define(['jquery'], function($) {
       
       // create a resizer which handles resize events
       if (bindToViewport) {
-        var resizer = function() {
-          var viewport = $(window);
-          
-          // hide it so that it doesn't increase size of viewport
-          _ref.panel.hide();
-          
-          // set the height of the viewport
-          _ref.panel.height(viewport.height());
-          _ref.panel.width(viewport.width());
-          
-          // show the panel again
-          _ref.panel.show();
-        };
+        this.boundToViewport = true;
         
-        // run it once and add the listener to receive resize events
-        resizer();
-        $(window).resize(resizer);
+        var _ref = this;
+        $(window).on('resize.' + this.uuid, function() {
+          _ref.layout();
+        }); 
       }
-
-      // set the current width and height
-      this.width = this.panel.width();
-      this.height = this.panel.height();
-    
-      // add a resize listener to the window
-      $(window).resize(function() {
-      
-        var width = _ref.panel.width();
-        var height = _ref.panel.height();
-        
-        if (width == _ref.width && height == _ref.height) {
-          return;
-        } else {
-      
-          // update the width and height
-          _ref.width = _ref.panel.width();
-          _ref.height = _ref.panel.height();
-      
-          // fire the event
-          _ref.onResize(_ref.width, _ref.height);
-        }
-      });
             
       // set some css attributes and disable the panel selection
-      this.panel.css({ position: "relative", overflow: "hidden" });
+      this.panel.css({ position: "relative" });
       this.disableSelection(this.panel);
       
       // create the divs
@@ -220,10 +189,7 @@ define(['jquery'], function($) {
         var el = $("<div></div>").appendTo(this.panel);
         el.addClass("placeholder");
         el.attr("id", "placeholder_" + i);
-        el.css({ 
-          overflow: "hidden",
-          position: "absolute"
-        });
+        el.css("position", "absolute");
         
         // add the click event
         if (tileConfig.disableClick != true) {
@@ -246,7 +212,7 @@ define(['jquery'], function($) {
       this.layout();
       
       // add the content to the layouted values
-      var placeholder = $(".placeholder");
+      var placeholder = $(this.placeHolderSelector);
       placeholder.each(function(index) {  
         var el = $(this);
         var tileConfig = _ref.tiles[index] == null ? {} : _ref.tiles[index];
@@ -268,7 +234,7 @@ define(['jquery'], function($) {
           if (tileConfig.showPreview == false || !_ref.isCssPointerEvents()) {
             iframe.hide();
           }
-        } else if (tileConfig.script != null) {
+        } else if (tileConfig.scripts != null) {
           var el = $(this);
           
           var div = $("<div></div>").appendTo(el);
@@ -287,13 +253,30 @@ define(['jquery'], function($) {
             e.stopPropagation();
           });
           
-          var func;
-          if ($.isFunction(tileConfig.script)) {
-            func = tileConfig.script;
-          } else {
-            func = function() { eval(tileConfig.script); };
+          var funcFull;
+          if ($.isFunction(tileConfig.scripts.full)) {
+            funcFull = tileConfig.scripts.full;
+          } else if (tileConfig.scripts.full != null) {
+            funcFull = function() { eval(tileConfig.scripts.full); };
           }
-          div.on('full', function() { func(div); });
+          div.on('full', function() { funcFull(div); });
+          
+          var funcTile;
+          if ($.isFunction(tileConfig.scripts.tile)) {
+            funcTile = tileConfig.scripts.tile;
+          } else if (tileConfig.scripts.tile != null) {
+            funcTile = function() { eval(tileConfig.scripts.tile); };
+          }
+          div.on('tile', function() { funcTile(div); });
+          
+          var funcResize;
+          if ($.isFunction(tileConfig.scripts.resize)) {
+            funcResize = tileConfig.scripts.resize;
+          } else if (tileConfig.scripts.resize != null) {
+            funcResize = function() { eval(tileConfig.scripts.resize); };
+          }
+          div.on('resizeTile', function(event, tile) { funcResize(tile.width(), tile.height()); });
+          
           div.hide();
         }
       });
@@ -332,7 +315,13 @@ define(['jquery'], function($) {
      * width and height is passed.
      */
     onResize: function(width, height) {
-      this.layout();
+      var cur = this.current();
+      if (cur == null || cur.layout == null || !cur.layout.isSingleTileLayout()) {
+        this.applyLayout(this.determinePanelLayout());
+      } else {
+        this.applyLayoutToTile(cur.tile, cur.layout);
+        this.getContent(cur.tile).trigger('resizeTile', [cur.tile]);
+      }
     },
     
     /**
@@ -340,12 +329,53 @@ define(['jquery'], function($) {
      * should be called whenever the panel is resized or the panel is
      * initialized.
      */
-    layout: function() {
-      var cur = this.current();
-      if (cur == null || cur.layout == null || !cur.layout.isSingleTileLayout()) {
-        this.applyLayout(this.determinePanelLayout());
-      } else {
-        this.applyLayoutToTile(cur.tile, cur.layout);
+    layout: function(posX, posY, width, height) {
+
+      // override the passed values, if any if we are bound
+      if (this.boundToViewport) {
+        var viewport = $(window);
+        
+        // the width and height
+        var offetWidth = this.panel.outerWidth(true) - this.panel.width();
+        var offetHeight = this.panel.outerHeight(true) - this.panel.height();
+        
+        // hide it so that it doesn't increase size of viewport
+        this.panel.hide();
+        var viewportHeight = viewport.height();
+        var viewportWidth = viewport.width();
+        
+        // show the panel again and lay it out
+        this.panel.show();
+        
+        posX = 0;
+        posY = 0;
+        width = viewportWidth - offetWidth;
+        height = viewportHeight - offetHeight;
+      }
+      
+      // apply the passed values
+      if ($.isNumeric(posX) && posX >= 0) {
+        this.panel.css('left', posX + 'px');
+      }
+      if ($.isNumeric(posY) && posY >= 0) {
+        this.panel.css('top', posY + 'px');
+      }
+      if ($.isNumeric(width) && width >= 0) {
+        this.panel.width(width);
+      }
+      if ($.isNumeric(height) && height >= 0) {
+        this.panel.height(height);
+      }
+
+      // set the new values
+      var oldWidth = this.width;
+      var oldHeight = this.height;
+      this.width = this.panel.width();
+      this.height = this.panel.height();
+
+      // do actually the resizing
+      if (oldWidth != this.width || oldHeight != this.height) {
+        this.onResize(this.width, this.height);
       }
     },
    
@@ -355,7 +385,7 @@ define(['jquery'], function($) {
      * if it is currently applied, otherwise a panel-layout).
      */
     current: function() {
-      var placeholder = $(".placeholder");
+      var placeholder = $(this.placeHolderSelector);
       
       // apply the selected layout
       var currentLayout = null;
@@ -449,7 +479,7 @@ define(['jquery'], function($) {
       if (layout == null) {
         this.panel.empty();
       } else if (sel == null) {
-        var placeholder = $(".placeholder");
+        var placeholder = $(this.placeHolderSelector);
       
         // apply the selected layout
         var _ref = this;
