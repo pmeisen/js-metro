@@ -1,7 +1,7 @@
 module('testLayouter');
 
 test('testGeneral', function() {
-  var Layouter = require('net/meisen/general/ui/metro/Layouter');
+  var Layouter = require('net/meisen/ui/metro/Layouter');
   notEqual(Layouter, undefined, 'Layouter prototype available');
   
   // instantiate an app
@@ -10,7 +10,7 @@ test('testGeneral', function() {
 
 test('testBindWithoutConfig', function() {
   var $ = require('jquery');
-  var Layouter = require('net/meisen/general/ui/metro/Layouter');
+  var Layouter = require('net/meisen/ui/metro/Layouter');
 
   var layouter = new Layouter();
   layouter.bind("#qunit-fixture", false);
@@ -19,7 +19,7 @@ test('testBindWithoutConfig', function() {
 });
 
 test('testConfiguration', function() {
-  var Layouter = require('net/meisen/general/ui/metro/Layouter');
+  var Layouter = require('net/meisen/ui/metro/Layouter');
 
   var layouter = new Layouter();
   throws(function() { 
@@ -151,7 +151,7 @@ test('testConfiguration', function() {
 
 test('testBinding', function() {
   var $ = require('jquery');
-  var Layouter = require('net/meisen/general/ui/metro/Layouter');
+  var Layouter = require('net/meisen/ui/metro/Layouter');
   
   var layouter = new Layouter();
   layouter.config({

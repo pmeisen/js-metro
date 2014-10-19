@@ -64,7 +64,7 @@ define(['jquery'], function($) {
     this.singleRule = function() { return null; };
   };
   Layouter.prototype = {
-    placeHolderSelector: 'div.placeholder[id^="placeholder_"',
+    placeHolderSelector: 'div.placeholder[id^="placeholder_"]',
     
     isCssPointerEvents: function() {
       var element = document.createElement('x');
