@@ -5,7 +5,7 @@ define(['jquery'], function($) {
    * The Layouter creates the needed instances based on the configuration.
    */
   var LayoutStyle = function(layouter, layoutName, layoutConfig) {
-    this.closeButtonSize = 50;
+    this.closeButtonSize = layoutConfig.closeButtonSize ? layoutConfig.closeButtonSize : 50;
     
     // set the name of the layout
     if (typeof layoutName !== "string") {
