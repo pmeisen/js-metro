@@ -183,29 +183,22 @@ define(['jquery'], function($) {
       
       // create the divs
       for (var i = 0; i < this.tiles.length; i++) {
-        var tileConfig = _ref.tiles[i] == null ? {} : _ref.tiles[i];
       
         // create the placeholder
         var el = $("<div></div>").appendTo(this.panel);
         el.addClass("placeholder");
         el.attr("id", "placeholder_" + i);
-        el.css("position", "absolute");
+        
+        // apply the CSS to the tile
+        this.applyTileCss(el);
         
         // add the click event
+        var tileConfig = this.tiles[i] == null ? {} : this.tiles[i];      
         if (tileConfig.disableClick != true) {
           el.click(function() {
             _ref.onClick($(this));
           });
-
-          el.css("cursor", "pointer");
         }
-        
-        if (tileConfig.css != null) {
-          el.css(tileConfig.css);
-        }
-        
-        // disable selection
-       this.disableSelection(el);
       }
       
       // layout the placeholder
@@ -494,6 +487,24 @@ define(['jquery'], function($) {
       }
     },
     
+    applyTileCss: function(el) {
+      var _ref = this;
+      el = this.getTile(el);
+      var index = parseInt(el.attr('id').replace('placeholder_', ''));
+      var tileConfig = this.tiles[index] == null ? {} : this.tiles[index];      
+      el.css("position", "absolute");
+      
+      if (tileConfig.css != null) {
+        el.css(tileConfig.css);
+      }
+      if (tileConfig.disableClick != true) {
+        el.css("cursor", "pointer");
+      }
+      
+      // disable selection
+      this.disableSelection(el);
+    },
+    
     /**
      * Gets the tile selected by sel. A tile can be selected by
      * it's id, it's jQuery object, or it's index.
@@ -537,7 +548,9 @@ define(['jquery'], function($) {
   
       // apply the layout to the tile
       var index = parseInt(el.attr("id").replace("placeholder_", ""));
+      el.attr('style', '');
       el.css(layout.tileCss(index));
+      this.applyTileCss(el);
 
       // set the correct classes
       for(var i in this.layouts) {
@@ -561,8 +574,6 @@ define(['jquery'], function($) {
         
         // add the close button if it's a single tile
         if (layout.isSingleTileLayout()) {
-
-        
           var closeButton = el.children(".closeButton");
           if (closeButton.size() == 0) {
             closeButton = $("<div></div>").appendTo(el);
